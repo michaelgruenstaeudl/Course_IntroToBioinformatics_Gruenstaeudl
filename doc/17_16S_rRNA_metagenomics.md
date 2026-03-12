@@ -24,7 +24,7 @@ seqkit pair -1 ${SAMPLE}_R1_001.cleaned.fastq.gz -2 ${SAMPLE}_R2_001.cleaned.fas
 
 # Paired-end sequence reads
 pear -f ${SAMPLE}_R1_001.cleaned.paired.fastq.gz -r ${SAMPLE}_R2_001.cleaned.paired.fastq.gz -o 16S_rRNA_seq_30_1302373217__${SAMPLE}
-for i in 16S*__${SAMPLE}.fastq; do gzip $i; done
+for i in 16S*__${SAMPLE}*.fastq; do gzip $i; done
 ```
 
 #### Installation of QIIME2
