@@ -52,3 +52,8 @@ Coding exercises from the introductory bioinformatics course taught by Michael G
 
 ### 🗄️ SQLite
 16. [Introduction to SQLite for Biologists](https://github.com/michaelgruenstaeudl/BioinformaticsCourseGruenstaeudl/blob/main/doc/16_Introduction_to_SQLite.md)
+
+---
+
+### 16S rRNA metagenomics
+17. [Introduction to 16S rRNA metagenomics](https://github.com/michaelgruenstaeudl/BioinformaticsCourseGruenstaeudl/blob/main/doc/17_16S_rRNA_metagenomics.md)
