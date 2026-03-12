@@ -11,15 +11,19 @@ conda install -c bioconda pear
 
 #### Pairing the paired-end sequence reads
 ```bash
+
+#SAMPLE=FL
+SAMPLE=HT
+
 # Prepare the paired-end sequence reads
-seqkit sana FL_R1_001.fastq.gz -o FL_R1_001.cleaned.fastq 2>FL_R1_001.cleaned.fastq.log
-gzip FL_R1_001.cleaned.fastq
-seqkit sana FL_R2_001.fastq.gz -o FL_R2_001.cleaned.fastq 2>FL_R2_001.cleaned.fastq.log
-gzip FL_R2_001.cleaned.fastq
-seqkit pair -1 FL_R1_001.cleaned.fastq.gz -2 FL_R2_001.cleaned.fastq.gz 2>FL_R2_001.cleaned.paired.log
+seqkit sana ${SAMPLE}_R1_001.fastq.gz -o ${SAMPLE}_R1_001.cleaned.fastq 2>${SAMPLE}_R1_001.cleaned.fastq.log
+gzip ${SAMPLE}_R1_001.cleaned.fastq
+seqkit sana ${SAMPLE}_R2_001.fastq.gz -o ${SAMPLE}_R2_001.cleaned.fastq 2>${SAMPLE}_R2_001.cleaned.fastq.log
+gzip ${SAMPLE}_R2_001.cleaned.fastq
+seqkit pair -1 ${SAMPLE}_R1_001.cleaned.fastq.gz -2 ${SAMPLE}_R2_001.cleaned.fastq.gz 2>${SAMPLE}_R2_001.cleaned.paired.log
 
 # Paired-end sequence reads
-pear -f FL_R1_001.cleaned.paired.fastq.gz -r FL_R2_001.cleaned.paired.fastq.gz -o 16S_rRNA_seq_30_1302373217__FL
+pear -f ${SAMPLE}_R1_001.cleaned.paired.fastq.gz -r ${SAMPLE}_R2_001.cleaned.paired.fastq.gz -o 16S_rRNA_seq_30_1302373217__${SAMPLE}
 for i in 16S*.fastq; do gzip $i; done
 ```
 
