@@ -1,6 +1,6 @@
-### 16S rRNA metagenomics
+## 16S rRNA metagenomics
 
-#### Installation of the necessary tools
+### Installation of the necessary tools
 ```bash
 # Installation of seqkit (for correcting paired-end reads)
 conda install -c bioconda seqkit
@@ -9,11 +9,10 @@ conda install -c bioconda seqkit
 conda install -c bioconda pear
 ```
 
-#### Pairing the paired-end sequence reads
+### Pairing the paired-end sequence reads
 ```bash
 
-#SAMPLE=FL
-SAMPLE=HT
+SAMPLE=30_1297791016_H1
 
 # Prepare the paired-end sequence reads
 seqkit sana ${SAMPLE}_R1_001.fastq.gz -o ${SAMPLE}_R1_001.cleaned.fastq 2>${SAMPLE}_R1_001.cleaned.fastq.log
@@ -23,11 +22,11 @@ gzip ${SAMPLE}_R2_001.cleaned.fastq
 seqkit pair -1 ${SAMPLE}_R1_001.cleaned.fastq.gz -2 ${SAMPLE}_R2_001.cleaned.fastq.gz 2>${SAMPLE}_R2_001.cleaned.paired.log
 
 # Paired-end sequence reads
-pear -f ${SAMPLE}_R1_001.cleaned.paired.fastq.gz -r ${SAMPLE}_R2_001.cleaned.paired.fastq.gz -o 16S_rRNA_seq_30_1302373217__${SAMPLE}
-for i in 16S*__${SAMPLE}*.fastq; do gzip $i; done
+pear -f ${SAMPLE}_R1_001.cleaned.paired.fastq.gz -r ${SAMPLE}_R2_001.cleaned.paired.fastq.gz -o 16S_rRNA_seq_${SAMPLE}
+for i in 16S*_${SAMPLE}*.fastq; do gzip $i; done
 ```
 
-#### Installation of QIIME2
+### Installation of QIIME2
 ```bash
 # Installation of QIIME2
 conda install -n base -c conda-forge conda=25.11.1
@@ -39,12 +38,26 @@ conda activate qiime2-amplicon-2026.1
 qiime info
 ```
 
-#### Main QIIME2 analysis
+### Main QIIME2 analysis
+
+#### Preparatory steps
 ```bash
+# Define variables
+LOCATION="HorsethiefReservoir"   # CHANGE AS NEEDED!
+SAMPLE="30_1302373217_HT"        # CHANGE AS NEEDED!
+
+# Make sample-specific folder and operate only in the folder
+mkdir -p 16S_rRNA_seq_${SAMPLE}
+mv 16S_rRNA_seq_${SAMPLE}.assembled.fastq.gz 16S_rRNA_seq_${SAMPLE}
+cd 16S_rRNA_seq_${SAMPLE}
+
 # Create a TSV-formatted manifest file
 printf "sample-id\tabsolute-filepath\n" > manifest.tsv
-printf "FossilLake\t%s\n" "$(realpath 16S_rRNA_seq_30_1302373217__FL.assembled.fastq.gz)" >> manifest.tsv
+printf "%s\t%s\n" "$LOCATION" "$(realpath 16S_rRNA_seq_${SAMPLE}.assembled.fastq.gz)" >> manifest.tsv
+```
 
+#### Importing FASTQ, assessing read quality, denoising reads
+```bash
 # Import the FASTQ file
 qiime tools import \
   --type 'SampleData[SequencesWithQuality]' \
@@ -65,8 +78,10 @@ qiime dada2 denoise-single \
   --o-representative-sequences rep-seqs.qza \
   --o-denoising-stats denoising-stats.qza \
   --o-base-transition-stats base-transition-stats.qza
+```
 
-# Conduct filtering
+#### Summarize feature table, sequences, and denoising statistics
+```bash
 qiime feature-table summarize \
   --i-table table.qza \
   --o-feature-frequencies feature-frequencies.qza \
@@ -80,7 +95,10 @@ qiime feature-table tabulate-seqs \
 qiime metadata tabulate \
   --m-input-file denoising-stats.qza \
   --o-visualization denoising-stats.qzv
+```
 
+#### Assign taxonomy based on sequence classification
+```bash
 # Obtain a classifer for the common 515F/806R V4 region
 wget \
   -O "gg-13-8-99-515-806-nb-classifier.qza" \
@@ -91,7 +109,10 @@ qiime feature-classifier classify-sklearn \
   --i-classifier gg-13-8-99-515-806-nb-classifier.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza
+```
 
+#### Generate plain text taxonomy table
+```bash
 # View the taxonomy table
 qiime metadata tabulate \
   --m-input-file taxonomy.qza \
@@ -114,8 +135,7 @@ qiime tools export \
   --output-path exported-table
 ```
 
-
-#### Merging features sharing the same taxonomic label into one row
+#### Merging sequences sharing taxonomic label into rows
 ```bash
 # Make a readable taxonomy table
 qiime metadata tabulate \
@@ -180,4 +200,15 @@ biom convert \
   -i exported-family-table/feature-table.biom \
   -o family-table.tsv \
   --to-tsv
+```
+
+#### Viewing the files locally
+```bash
+qiime tools view denoising-stats.qzv
+qiime tools view demux-summary.qzv
+qiime tools view taxa-bar-plots.qzv
+qiime tools view taxonomy.qzv
+qiime tools view table-summary.qzv
+qiime tools view genus-table-summary.qzv
+qiime tools view family-table-summary.qzv
 ```
