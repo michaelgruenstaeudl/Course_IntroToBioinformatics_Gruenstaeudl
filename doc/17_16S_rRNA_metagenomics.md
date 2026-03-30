@@ -56,7 +56,7 @@ printf "sample-id\tabsolute-filepath\n" > manifest.tsv
 printf "%s\t%s\n" "$LOCATION" "$(realpath 16S_rRNA_seq_${SAMPLE}.assembled.fastq.gz)" >> manifest.tsv
 ```
 
-#### Importing FASTQ, assessing read quality, denoising reads
+#### Importing FASTQ, assessing read quality
 ```bash
 # Import the FASTQ file
 qiime tools import \
@@ -70,6 +70,11 @@ qiime demux summarize \
   --i-data demux-single-end.qza \
   --o-visualization demux-summary.qzv
 
+qiime tools view demux-summary.qzv
+```
+
+#### Denoising reads
+```bash
 # Denoise single reads with DADA2
 qiime dada2 denoise-single \
   --i-demultiplexed-seqs demux-single-end.qza \
@@ -78,6 +83,8 @@ qiime dada2 denoise-single \
   --o-representative-sequences rep-seqs.qza \
   --o-denoising-stats denoising-stats.qza \
   --o-base-transition-stats base-transition-stats.qza
+
+qiime tools view denoising-stats.qzv
 ```
 
 #### Summarize feature table, sequences, and denoising statistics
@@ -88,6 +95,10 @@ qiime feature-table summarize \
   --o-sample-frequencies sample-frequencies.qza \
   --o-summary table-summary.qzv
 
+qiime tools view table-summary.qzv
+```
+
+```bash
 qiime feature-table tabulate-seqs \
   --i-data rep-seqs.qza \
   --o-visualization rep-seqs.qzv
@@ -95,6 +106,8 @@ qiime feature-table tabulate-seqs \
 qiime metadata tabulate \
   --m-input-file denoising-stats.qza \
   --o-visualization denoising-stats.qzv
+
+qiime tools view rep-seqs.qzv
 ```
 
 #### Assign taxonomy based on sequence classification
@@ -118,6 +131,10 @@ qiime metadata tabulate \
   --m-input-file taxonomy.qza \
   --o-visualization taxonomy.qzv
 
+qiime tools view taxonomy.qzv
+```
+
+```bash
 # Make a taxa composition plot
 qiime taxa barplot \
   --i-table table.qza \
@@ -125,6 +142,10 @@ qiime taxa barplot \
   --m-metadata-file manifest.tsv \
   --o-visualization taxa-bar-plots.qzv
 
+qiime tools view taxa-bar-plots.qzv
+```
+
+```bash
 # Export the taxonomy table to plain text
 qiime tools export \
   --input-path taxonomy.qza \
@@ -142,11 +163,21 @@ qiime metadata tabulate \
   --m-input-file taxonomy.qza \
   --o-visualization taxonomy.qzv
 
+qiime tools view taxonomy.qzv
+
 # Combine sequences with taxonomy
 qiime feature-table tabulate-seqs \
   --i-data rep-seqs.qza \
   --i-taxonomy taxonomy.qza \
   --o-visualization rep-seqs-with-taxonomy.qzv
+  
+qiime tools view rep-seqs-with-taxonomy.qzv
+```
+
+[!NOTE]
+The following visualization is helpful.
+```bash
+qiime tools view rep-seqs-with-taxonomy.qzv
 ```
 
 #### Make a genus-level abundance table
@@ -165,6 +196,10 @@ qiime feature-table summarize \
   --o-sample-frequencies genus-sample-frequencies.qza \
   --o-summary genus-table-summary.qzv
 
+qiime tools view genus-table-summary.qzv
+```
+
+```bash
 # Export the genus table to a plain text file
 qiime tools export \
   --input-path genus-table.qza \
@@ -191,6 +226,10 @@ qiime feature-table summarize \
   --o-sample-frequencies family-sample-frequencies.qza \
   --o-summary family-table-summary.qzv
 
+qiime tools view family-table-summary.qzv
+```
+
+```bash
 # Export the family-level table to a plain text file
 qiime tools export \
   --input-path family-table.qza \
@@ -200,15 +239,4 @@ biom convert \
   -i exported-family-table/feature-table.biom \
   -o family-table.tsv \
   --to-tsv
-```
-
-#### Viewing the files locally
-```bash
-qiime tools view denoising-stats.qzv
-qiime tools view demux-summary.qzv
-qiime tools view taxa-bar-plots.qzv
-qiime tools view taxonomy.qzv
-qiime tools view table-summary.qzv
-qiime tools view genus-table-summary.qzv
-qiime tools view family-table-summary.qzv
 ```
