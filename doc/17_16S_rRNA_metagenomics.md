@@ -210,33 +210,107 @@ biom convert \
   --to-tsv
 ```
 
-#### Make a family-level abundance table
-```bash
-# Make a family-level abundance table
-qiime taxa collapse \
-  --i-table table.qza \
-  --i-taxonomy taxonomy.qza \
-  --p-level 5 \
-  --o-collapsed-table family-table.qza
+#### Generate visualization of taxa in sample
+```python
+import pandas as pd
+import matplotlib.pyplot as plt
 
-# Summarize the family-level abundance table
-qiime feature-table summarize \
-  --i-table family-table.qza \
-  --o-feature-frequencies family-feature-frequencies.qza \
-  --o-sample-frequencies family-sample-frequencies.qza \
-  --o-summary family-table-summary.qzv
+# ---------------------------
+# Read sample name from manifest.tsv
+# ---------------------------
+manifest = pd.read_csv("manifest.tsv", sep="\t")
+sample_name = manifest.loc[0, "sample-id"]
 
-qiime tools view family-table-summary.qzv
-```
+# ---------------------------
+# Read genus table
+# Skip the first comment line: "# Constructed from biom file"
+# ---------------------------
+df = pd.read_csv("genus-table.tsv", sep="\t", skiprows=1)
 
-```bash
-# Export the family-level table to a plain text file
-qiime tools export \
-  --input-path family-table.qza \
-  --output-path exported-family-table
+# Clean column names just in case
+df.columns = df.columns.str.strip()
 
-biom convert \
-  -i exported-family-table/feature-table.biom \
-  -o family-table.tsv \
-  --to-tsv
+# Rename the taxonomy column to something easier to work with
+df = df.rename(columns={"#OTU ID": "Taxon"})
+
+# The abundance column should match the sample name from manifest.tsv
+if sample_name not in df.columns:
+    raise ValueError(
+        f"Sample '{sample_name}' was not found in genus-table.tsv. "
+        f"Available columns: {list(df.columns)}"
+    )
+
+# ---------------------------
+# Extract genus from taxonomy string
+# ---------------------------
+def extract_genus(taxon):
+    taxon = str(taxon).strip()
+
+    # Handle fully unassigned rows
+    if taxon.lower().startswith("unassigned"):
+        return "Unassigned"
+
+    parts = [p.strip() for p in taxon.split(";")]
+
+    for part in parts:
+        if part.startswith("g__"):
+            genus = part.replace("g__", "").strip()
+            return genus if genus else "Unassigned"
+
+    return "Unassigned"
+
+df["Genus"] = df["Taxon"].apply(extract_genus)
+
+# ---------------------------
+# Aggregate counts at genus level
+# ---------------------------
+genus_counts = df.groupby("Genus")[sample_name].sum()
+genus_counts = genus_counts[genus_counts > 0]
+
+# Convert to relative abundance
+rel = genus_counts / genus_counts.sum()
+
+# Group small taxa into "Other"
+threshold = 0.03  # 3%
+major = rel[rel >= threshold].copy()
+minor = rel[rel < threshold].sum()
+
+if minor > 0:
+    major.loc["Other"] = minor
+
+major = major.sort_values(ascending=False)
+
+# ---------------------------
+# Plot donut chart
+# ---------------------------
+fig, ax = plt.subplots(figsize=(8, 8))
+
+wedges, texts, autotexts = ax.pie(
+    major,
+    labels=None,
+    autopct=lambda p: f"{p:.1f}%" if p >= 3 else "",
+    startangle=90,
+    wedgeprops={"width": 0.4, "edgecolor": "white", "linewidth": 1}
+)
+
+# Donut hole
+centre_circle = plt.Circle((0, 0), 0.60, fc="white")
+ax.add_artist(centre_circle)
+
+# Title in center
+ax.text(0, 0, sample_name, ha="center", va="center", fontsize=12)
+
+# Legend
+ax.legend(
+    wedges,
+    major.index,
+    title="Genus",
+    loc="center left",
+    bbox_to_anchor=(1, 0.5),
+    frameon=False
+)
+
+ax.set_title(f"Genus composition of {sample_name}")
+plt.tight_layout()
+plt.show()
 ```
