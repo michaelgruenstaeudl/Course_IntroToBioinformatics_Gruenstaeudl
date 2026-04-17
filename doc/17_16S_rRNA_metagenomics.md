@@ -102,21 +102,7 @@ qiime metadata tabulate \
 
 #### Assign taxonomy based on sequence classification
 
-##### OPTION 1: Classification using the Silva 138 database
-```bash
-# Download pre-trained SILVA classifier for your compatible version/region
-wget \
--O "silva-138-99-515-806-nb-classifier.qza" \
-"https://data.qiime2.org/classifiers/sklearn-1.4.2/silva/silva-138-99-nb-classifier.qza"
-
-# Assign taxonomy using the pre-trained classifier
-qiime feature-classifier classify-sklearn \
-  --i-classifier silva-138-99-515-806-nb-classifier.qza \
-  --i-reads rep-seqs.qza \
-  --o-classification taxonomy.qza
-```
-
-##### OPTION 2: Classification using BLAST
+##### OPTION 1: Classification using BLAST
 Relies on (and thus requires downloading of):
 - Silva 138 SSURef NR99 515F/806R region sequences
 - Silva 138 SSURef NR99 515F/806R region taxonomy
@@ -130,19 +116,20 @@ qiime feature-classifier classify-consensus-blast \
   --i-reference-taxonomy silva-138-99-tax-515-806.qza \
   --p-perc-identity 0.97 \
   --p-query-cov 0.8 \
-  --o-classification taxonomy.qza
+  --o-classification taxonomy.qza \
+  --o-search-results blast-results.qza
 ```
 
-##### OPTION 3: Classification using the Greengene database
+##### OPTION 2 (faster but less precise): Classification using the Silva 138 database
 ```bash
-# Obtain a classifer for the common 515F/806R V4 region
+# Download pre-trained SILVA classifier for your compatible version/region
 wget \
-  -O "gg-13-8-99-515-806-nb-classifier.qza" \
-  "https://data.qiime2.org/classifiers/sklearn-1.4.2/greengenes/gg-13-8-99-515-806-nb-classifier.qza"
+-O "silva-138-99-515-806-nb-classifier.qza" \
+"https://data.qiime2.org/classifiers/sklearn-1.4.2/silva/silva-138-99-nb-classifier.qza"
 
 # Assign taxonomy using the pre-trained classifier
 qiime feature-classifier classify-sklearn \
-  --i-classifier gg-13-8-99-515-806-nb-classifier.qza \
+  --i-classifier silva-138-99-515-806-nb-classifier.qza \
   --i-reads rep-seqs.qza \
   --o-classification taxonomy.qza
 ```
