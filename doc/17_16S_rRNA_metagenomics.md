@@ -213,7 +213,7 @@ biom convert \
 The script prints the lowest assigned rank when no genus information is present.
 Note: Sequences that are "unassigned" are not included in the visualization!
 
-##### `Make_donut_graph.py`
+##### `make_donut_graph.py`
 ```python
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -421,4 +421,9 @@ summary = pd.DataFrame({
 }).sort_values("RelativeAbundance", ascending=False)
 
 print(summary)
+```
+
+##### Execute `make_donut_graph.py`
+```bash
+python make_donut_graph.py --manifest manifest.tsv --table genus-table.tsv --threshold 0.01
 ```
