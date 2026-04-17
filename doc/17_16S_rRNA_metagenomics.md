@@ -116,7 +116,7 @@ qiime feature-classifier classify-sklearn \
   --o-classification taxonomy.qza
 ```
 
-##### Classification using BLAST
+##### OPTION 2: Classification using BLAST
 Relies on (and thus requires downloading of):
 - Silva 138 SSURef NR99 515F/806R region sequences
 - Silva 138 SSURef NR99 515F/806R region taxonomy
