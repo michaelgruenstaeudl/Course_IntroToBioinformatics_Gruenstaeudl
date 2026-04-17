@@ -23,10 +23,18 @@ parser.add_argument(
     help="Path to taxonomy table (e.g., genus-table.tsv)"
 )
 
+parser.add_argument(
+    "--threshold",
+    required=True,
+    type=float,
+    help="Relative abundance threshold as a decimal fraction (e.g., 0.03 for 3%)"
+)
+
 args = parser.parse_args()
 
 manifest_path = args.manifest
 table_path = args.table
+threshold = args.threshold
 
 # ---------------------------
 # Validate input files
@@ -36,6 +44,9 @@ if not os.path.exists(manifest_path):
 
 if not os.path.exists(table_path):
     sys.exit(f"Error: taxonomy table not found: {table_path}")
+
+if not 0 <= threshold <= 1:
+    sys.exit("Error: --threshold must be between 0 and 1 (e.g., 0.03 for 3%).")
 
 # ---------------------------
 # Read sample name from manifest.tsv
@@ -131,16 +142,17 @@ df["AssignedTaxon"] = df["Taxon"].apply(extract_lowest_assigned_taxon)
 taxon_counts = df.groupby("AssignedTaxon")[sample_name].sum()
 taxon_counts = taxon_counts[taxon_counts > 0]
 
+# Remove unassigned taxa
+taxon_counts = taxon_counts[taxon_counts.index != "Unassigned"]
+
 if taxon_counts.empty:
-    sys.exit("Error: No positive counts found after aggregation.")
+    sys.exit("Error: No positive counts found after removing unassigned taxa.")
 
 rel = taxon_counts / taxon_counts.sum()
 
 # ---------------------------
 # Group minor taxa
 # ---------------------------
-threshold = 0.03  # 3%
-
 major = rel[rel >= threshold].copy()
 minor = rel[rel < threshold].sum()
 
@@ -178,7 +190,10 @@ ax.legend(
 
 ax.set_title(f"Taxonomic composition of {sample_name}")
 plt.tight_layout()
-plt.show()
+
+# Save figures
+plt.savefig(f"{sample_name}_donut.png", dpi=300, bbox_inches="tight")
+plt.savefig(f"{sample_name}_donut.svg", bbox_inches="tight")
 
 # ---------------------------
 # Print summary table
